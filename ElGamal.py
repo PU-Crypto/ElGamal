@@ -47,9 +47,9 @@ def additionMG(p,q): #Die Addition von zwei Punkten auf der Kurve
 		r.append(Xr)
 		r.append(Yr)
 		return r
-def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 """Im eigentlichen gibt es den Operator der multiplikation auf Elliptischen Kurven nicht, deswegen wird hier
 rekrusiv das "doubling and add" - verfahren genutzt."""
+def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 	if n % 2 == 0 and n != 0: #Wenn der Faktor grade ist kann der erste Schritt gemacht werden, indem der Punkte verdoppelt wird.
 		r = []
 		x = Decimal(p[0])
@@ -82,18 +82,18 @@ rekrusiv das "doubling and add" - verfahren genutzt."""
 def ElGamal(text,PubKey):
 	m = int(UTF8.UTFConvert(text)) #Wandle Text in Zahl um
 	k = random.randint(0,100) #Waehle zufaelligen Kofaktot
-	P = [Decimal(3),Decimal(YCalc(3))] #Erzeugerpunkt
+	P = [Decimal(1763),Decimal(YCalc(1763))] #Erzeugerpunkt
 	c = multiplikation(PubKey,k)[0] #multipliziert kofaktor mit dem Oeffentlichen Schluessel, welcher ein Punkt ist. Die X-Koordniate reicht aus.
 	C = multiplikation(P,k) #Erster Teil des Ciphers. Das Produkt des Erzeugerpunktes und des Kofaktors 
 	d = c * m % prim #Zweiter Teil des Ciphers. Produkt der Nachricht und der x-Koordinate des PubKey-Produktes.
 	output = str(C[0]) + 'v' + str(C[1])  + 'u' + str(d) #Erstelle den Output
 	return output
 def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
-	P = [Decimal(3),Decimal(YCalc(3))]
+	P = [Decimal(1763),Decimal(YCalc(1763))]
 	Privat = int(KeyGen.KeyGen(password),16)
 	Public = multiplikation(P,Privat)
 	return Privat, Public
 
-"""Für ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen."""
+"""Fuer ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen."""
 
 

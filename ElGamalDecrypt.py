@@ -75,7 +75,7 @@ rekrusiv das "doubling and add" - verfahren genutzt."""
 		Darauf wird 2 mal die Verdopplung durchgefuehrt und das Ergebnis mit p addiert: p * 5 = p*2*2 + p."""
 		r = additionMG(p,zwischenwert)
 		return r
-	if n == 1: #Hier kommt sie Funktion schliesslich hin bei n = 2^x. Wenn der Faktor schliesslich 1 ist, ist das Erbegnis p.
+	if n == 1: #Hier kommt die Funktion schliesslich hin bei n = 2^x. Wenn der Faktor schliesslich 1 ist, ist das Erbegnis p.
 		return p
 
 def ElGamalDecrypt(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird m ermittelt
