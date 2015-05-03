@@ -81,7 +81,7 @@ def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 
 def ElGamal(text,PubKey):
 	m = int(UTF8.UTFConvert(text)) #Wandle Text in Zahl um
-	k = random.randint(0,100) #Waehle zufaelligen Kofaktot
+	k = random.randint(0,prim) #Waehle zufaelligen Kofaktot
 	P = [Decimal(1763),Decimal(YCalc(1763))] #Erzeugerpunkt
 	c = multiplikation(PubKey,k)[0] #multipliziert kofaktor mit dem Oeffentlichen Schluessel, welcher ein Punkt ist. Die X-Koordniate reicht aus.
 	C = multiplikation(P,k) #Erster Teil des Ciphers. Das Produkt des Erzeugerpunktes und des Kofaktors 
