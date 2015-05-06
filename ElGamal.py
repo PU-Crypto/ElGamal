@@ -4,6 +4,7 @@ import decimal
 import random
 import KeyGen as KeyGen
 import UTF8_Convert as UTF8
+import json
 decimal.getcontext().prec = 1000 # es wird alles benoetigte improtiert und die Praezision der Decimals festgestellt, welche nicht zu gering sein sollte.
 """Curve25519: y^2=x^3+486662x^2+x
 	Prinmzahl: 2^255- 19"""
@@ -88,12 +89,77 @@ def ElGamal(text,PubKey):
 	d = c * m % prim #Zweiter Teil des Ciphers. Produkt der Nachricht und der x-Koordinate des PubKey-Produktes.
 	output = str(C[0]) + 'v' + str(C[1])  + 'u' + str(d) #Erstelle den Output
 	return output
+
+def ElGamalDecrypt(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird m ermittelt
+	C = [0,0]
+	C[0] = Decimal(cipher.split('v')[0])
+	zwischenwert = cipher.split('v')[1]
+	C[1] = Decimal(zwischenwert.split('u')[0])
+	d =  Decimal(zwischenwert.split('u')[1]) #Cipher wird gesplittet
+	c1 = multiplikation(C,Privatkey)[0] #Es wird C mit dem Wert Multipliziert und die X-Koordinate ausgelesen.
+	m1 = str(d/c1 % prim + 1) 
+	"""m wird ermittelt. Da das ergebnis aufgrund der Langen Decimalzahlen bei einer Praezision von 1000 immer sehr knapp unter dem eigentlichen 
+	m (differenz der werte ueblicherweise bei e-900) ist und die Rundenfunktion des flaots zu ungenau ist bei prec = 1000 wird 1 dazu addiert und dann
+	der rest hinter dem Komma, also .9999999... angeschnitten."""
+	m1 = m1.split('.')
+	m1 = int(m1[0])
+	output = UTF8.UTFdeConvert(m1) #die Zahl wird wieder in einen Text gewandelt.
+	return output
+
 def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
 	P = [Decimal(1763),Decimal(YCalc(1763))]
 	Privat = int(KeyGen.KeyGen(password),16)
-	Public = multiplikation(P,Privat)
-	return Privat, Public
+	#Public = multiplikation(P,Privat)
+	return Privat#, Public
 
 """Fuer ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen."""
 
+def handleShellParam(param, default):
 
+	for cmdarg in sys.argv:
+		if(("--" + param + "=") in cmdarg):
+			return str(cmdarg.replace(("--" + param + "="), ""))
+		elif(("-" + param + "=") in cmdarg):
+			return str(cmdarg.replace(("-" + param + "="), ""))
+		elif(("--" + param) in cmdarg):
+			return str(cmdarg.replace(("--"), ""))
+		elif(("-" + param) in cmdarg):
+			return str(cmdarg.replace(("-"), ""))
+	return default
+
+task = handleShellParam("t", 0) 
+"""zur Bestimmung was gerade von dem Script verlangt wird, sonst exited er, wenn man verschluesseln will und natuerlich das Password fehlt
+Fuer KeyGen waehlen Sie bitte die 1, fue Encrypt die 2 und fuer Decrypt die 3"""   
+password = handleShellParam("p", 0)
+keyname = handleShellParam("k", 0)
+PlainOrCipher = handleShellParam("poc", 0)
+Key = handleShellParam("key", 0) 
+if task == 1:
+	if password != 0 and keyname != 0 and len(password) > 15: #das mit len braucht sha3, sonst bugt das.
+		keys = KeyGenerator(password)
+		privat = keys[0]
+		public = keys[1]
+		NewKey = {"key" : {"name" : keyname, "keys" : {"privkey" : privat, "pubkey" : public}}}
+	
+		with open("keys.json", 'w') as outfile:
+			json.dump(NewKey, outfile, indent = 3, sort_keys = True)
+			sys.exit(0)
+	elif len(password) < 16:
+		print("Das Passwort ist zu kurz. Die laenge muss mindestens 16 Zeichen betragen")
+		sys.exit(1)
+	elif password = 0:
+		print("Es fehlte das Passwort bei ihrer Eingabe")
+		sys.exit(1)
+	elif keyname = 0:
+		print("Es fehlte der Schluesselname bei ihrer Eingabe")
+		sys.exit(1)
+	else
+		print ("Leere Felder mag Deep Thought nicht") #der muss so bleiben!!!
+		sys.exit(1)
+if task == 2:
+	print(ElGamal(PlainOrCipher, Key))
+	sys.exit(0)
+if task == 3:
+	print(ElGamalDecrypt(PlainOrCipher, Key))
+	sys.exit(0)
+#Ja ich weiss, dass evt. manche Kommentare noch geändert werden muessen, aber klappt das so?
