@@ -109,8 +109,8 @@ def ElGamalDecrypt(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird m e
 def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
 	P = [Decimal(1763),Decimal(YCalc(1763))]
 	Privat = int(KeyGen.KeyGen(password),16)
-	#Public = multiplikation(P,Privat)
-	return Privat#, Public
+	Public = multiplikation(P,Privat)
+	return Privat, Public
 
 """Fuer ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen."""
 
