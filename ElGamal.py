@@ -13,7 +13,7 @@ a = 486662 #Die Montomerykurve wird mit Primzahl definiert
 b = 1
 prim = Decimal(2**255 - 19)
 def YCalc(x): #Ermittlung des Punktes anhand des x-wertes und einsetzen in die Gleichung
-	y = Decimal(((x**3+ 486662 * x**2 + x)/1)**Decimal(0.5))
+	y = Decimal((x**3+ 486662 * x**2 + x)**Decimal(0.5))
 	return y
 def additionMG(p,q): #Die Addition von zwei Punkten auf der Kurve
 	r = []
@@ -83,8 +83,9 @@ def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 
 def ElGamal(text,PubKey):
 	m = int(UTF8.UTFConvert(text)) #Wandle Text in Zahl um
-	k = random.randint(0,prim) #Waehle zufaelligen Kofaktot
-	P = [Decimal(1763),Decimal(YCalc(1763))] #Erzeugerpunkt
+	print(m)
+	k = random.randint(0,1000) #Waehle zufaelligen Kofaktot
+	P = [Decimal(31),Decimal(YCalc(31))] #Erzeugerpunkt
 	c = multiplikation(PubKey,k)[0] #multipliziert kofaktor mit dem Oeffentlichen Schluessel, welcher ein Punkt ist. Die X-Koordniate reicht aus.
 	C = multiplikation(P,k) #Erster Teil des Ciphers. Das Produkt des Erzeugerpunktes und des Kofaktors 
 	d = c * m % prim #Zweiter Teil des Ciphers. Produkt der Nachricht und der x-Koordinate des PubKey-Produktes.
@@ -104,11 +105,12 @@ def ElGamalDecrypt(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird m e
 	#der rest hinter dem Komma, also .9999999... angeschnitten.
 	m1 = m1.split('.')
 	m1 = int(m1[0])
+	print(m)
 	output = UTF8.UTFdeConvert(m1) #die Zahl wird wieder in einen Text gewandelt.
 	return output
 
 def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
-	P = [Decimal(1763),Decimal(YCalc(1763))] #Jan: P0 -> kurze Zahl; P1 -> lange Zahl mit Komma nach ca. 7 Stellen
+	P = [Decimal(31),Decimal(YCalc(31))] #Jan: P0 -> kurze Zahl; P1 -> lange Zahl mit Komma nach ca. 7 Stellen
 	Privat = int(KeyGen.KeyGen(password),16)
 	Public = (multiplikation(P,Privat))
 	return Privat, Public

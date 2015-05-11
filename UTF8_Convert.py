@@ -21,7 +21,7 @@ def UTFConvert(plain): #Wandle Test in utf-8 um und erstelle CBC kompatible Bloe
     einString =''
     for i in range(0,len(s)): #erstelle einen string mit dualzahlen
         dump = str(s[i])
-        dump = Padding(dump,4)
+        dump = Padding(dump,3)
         einString += dump
 
 
@@ -38,9 +38,9 @@ def UTFdeConvert(einString): #Array mit jeweils acht stellen die 0 oder 1 sind
     
 
     einString = str(int(einString)) #Entferne fuehrende 0
-    einString = Padding(einString,4) #Erweitere wieder auf 11er Bloecke
+    einString = Padding(einString,3) #Erweitere wieder auf 11er Bloecke
     
-    block = SplitBlocks(einString,4) #Trenne in 11er Bloecke
+    block = SplitBlocks(einString,3) #Trenne in 11er Bloecke
 
 
     output = ''
