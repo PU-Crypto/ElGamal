@@ -40,11 +40,11 @@ def run(num):
 
 def additionMG(p,q):  #Die Addition von zwei Punkten auf der Kurve
 	r = []
-	if p[0] == 0 and p[1] == 0: #Spezialfall: ein punkt ist (0,0), dann ist die addition ueberfluessig
+	if p[0] == 0 and p[1] == 1: #Spezialfall: ein punkt ist (0,0), dann ist die addition ueberfluessig
 		return q
-	if q[0] ==0 and q[1] == 0:
+	if q[0] ==0 and q[1] == 1:
 		return p
-	if p!=q and p[1]!=-q[1]:
+	if p!=q and p[0]!=-q[0]:
 	
 		X1 = Decimal(p[0])
 		Y1 = Decimal(p[1])
@@ -68,9 +68,9 @@ def additionMG(p,q):  #Die Addition von zwei Punkten auf der Kurve
 		r.append(Yr)
 		#r.append(Zr)
 		return r
-	if p[0] == q[0] and p[1] == -q[1]: #Spezialfall: Die punkte sind identisch, wenn man einen an der X-Achse spiegelt: Ergebnis (0,0)
+	if p[0] == -q[0] and p[1] == q[1]: #Spezialfall: Die punkte sind identisch, wenn man einen an der X-Achse spiegelt: Ergebnis (0,0)
 		Xr = Decimal(0)
-		Yr = Decimal(0)
+		Yr = Decimal(1)
 		r.append(Xr)
 		r.append(Yr)
 		return r
@@ -115,7 +115,7 @@ def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 	if n == 0: #Spezialfall: der Faktor ist 0. 
 		r = []
 		r.append(0)
-		r.append(0)
+		r.append(1)
 		return r
 	if n % 2 == 1 and n != 1:
 		zwischenwert = multiplikation(p,n-1)
