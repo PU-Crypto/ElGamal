@@ -9,11 +9,19 @@ import json
 decimal.getcontext().prec = 1000 # es wird alles benoetigte improtiert und die Praezision der Decimals festgestellt, welche nicht zu gering sein sollte.
 #Curve25519: y^2=x^3+486662x^2+x
 #	Prinmzahl: 2^255- 19
-a = 486662 #Die Montomerykurve wird mit Primzahl definiert
+a = Decimal(486662) #Die Montomerykurve wird mit Primzahl definiert
 b = 1
 prim = Decimal(2**255 - 19)
+def Mod(num):
+	if num / prim > 1 or num / prim < -1 :
+		mult = Decimal((str(Decimal(num/prim)).split('.')[0]))
+		num = Decimal(num - mult * prim)
+		
+	
+	mod = Decimal(num)
+	return mod
 def YCalc(x): #Ermittlung des Punktes anhand des x-wertes und einsetzen in die Gleichung
-	y = Decimal((x**3+ 486662 * x**2 + x)**Decimal(0.5))
+	y = Mod(Decimal((x**3+ a * x**2 + x)**Decimal(0.5)))
 	return y
 def additionMG(p,q): #Die Addition von zwei Punkten auf der Kurve
 	r = []
@@ -26,8 +34,8 @@ def additionMG(p,q): #Die Addition von zwei Punkten auf der Kurve
 		y1 = Decimal(p[1])
 		x2 = Decimal(q[0])
 		y2 = Decimal(q[1]) #auslesen der Koordinaten der Punkte
-		Xr = Decimal(b*(x2*y1-x1*y2)**2/(x1*x2*(x2-x1)**2))
-		Yr = Decimal((((2*x1 + x2 + a)*(y2 - y1)) / (x2 - x1)) - b*((y2 - y1)**3 / (x2 - x1)**3) - y1)
+		Xr = Mod(Decimal((x2*y1-x1*y2)**2/(x1*x2*(x2-x1)**2)))
+		Yr = Mod(Decimal((((2*x1 + x2 + a)*(y2 - y1)) / (x2 - x1)) - ((y2 - y1)**3 / (x2 - x1)**3) - y1))
 		#Die Formeln erschliesst sich mit einigem aufwand aus der geometrischen Definition
 		#der Addition. Dazu kann ich diese Seite empfehlen: http://en.wikipedia.org/wiki/Montgomery_curve. Etwas ungenauer findet sich das auch in 
 		#theoretischen Ausarbeitung
@@ -43,9 +51,9 @@ def additionMG(p,q): #Die Addition von zwei Punkten auf der Kurve
 	if p == q: #Die Difinition von der Verdopplung eines Punktes ist ein bisschen anders als die normale Addition, deswegen dieser Spezialfall.
 		x = Decimal(p[0])
 		y = Decimal(p[1])
-		l = Decimal((3*x**2 + 2 * a * x + 1)/(2*y* b))
-		Xr = Decimal(b * l**2 - a - 2*x)
-		Yr = Decimal((x*3 + a )*l - b *l**3 - y)		
+		l = Decimal((3*x**2 + 2 * a * x + 1)/(2*y))
+		Xr = Mod(Decimal(b * l**2 - a - 2*x))
+		Yr = Mod(Decimal((x*3 + a )*l - l**3 - y))		
 		r.append(Xr)
 		r.append(Yr)
 		return r
@@ -57,8 +65,8 @@ def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 		x = Decimal(p[0])
 		y = Decimal(p[1])
 		l = Decimal((3*x**2 + 2 * a * x + 1)/(2 * y * b))
-		Xr = Decimal(b * l**2 - a - 2*x)
-		Yr = Decimal((x*3 + a )*l - b * l**3 - y)	
+		Xr = Mod(Decimal(b * l**2 - a - 2*x))
+		Yr = Mod(Decimal((x*3 + a )*l - b * l**3 - y))	
 		r.append(Xr)
 		r.append(Yr)
 		r = multiplikation(r,n/2) 
@@ -80,40 +88,93 @@ def multiplikation(p,n): #p ist der punkt n ist der Skalarfaktor
 	if n == 1: #Hier kommt sie Funktion schliesslich hin bei n = 2^x. Wenn der Faktor schliesslich 1 ist, ist das Erbegnis p.
 		return p
 
+def Padding(string,laenge): #Erweitere auf laenge Stellen mit vorangestellten 0
+	while(len(string)%laenge!=0):
+		string='0' + string 
+	return string
 
-def ElGamal(text,PubKey):
+def SplitBlocks(inString,Splitter):
+	block = list()
+	if len(inString) % Splitter != 0:
+		NewLen = Splitter*int(str(len(inString)/Splitter).split('.')[0]) 
+		einString = inString[0:NewLen] 
+		dump2 = inString[NewLen:len(inString)+1]
+	else:
+		einString = inString
+
+	for i in range(0,len(einString),Splitter): #Teile in Ner Bloecke
+		dump=''
+		for j in range(i,i+Splitter):
+			dump+=einString[j]
+		block.append(dump)
+	if len(inString) % Splitter != 0:
+		block.append(dump2)
+	return block
+def Stringsplitter(String):
+	array = []
+	String = String.split('[')[1]
+	String = String.split(']')[0]
+	count = 0
+	for char in String:
+		if char == ',':
+			count+=1
+	for i in range(0,count+1):
+		wert = String.split(',')[i]
+		wert = wert.split("'")[1]
+		wert = wert.split("'")[0]
+		array.append(wert)
+	return array
+
+def ElGamalCalc(text,PubKey):
 	m = int(UTF8.UTFConvert(text)) #Wandle Text in Zahl um
-	print(m)
-	k = random.randint(0,1000) #Waehle zufaelligen Kofaktot
-	P = [Decimal(31),Decimal(YCalc(31))] #Erzeugerpunkt
+	k = random.randint(0,578960446186580977117854925043439539266349923) #Waehle zufaelligen Kofaktot
+	P = [Decimal(9),Decimal(YCalc(9))] #Erzeugerpunkt
 	c = multiplikation(PubKey,k)[0] #multipliziert kofaktor mit dem Oeffentlichen Schluessel, welcher ein Punkt ist. Die X-Koordniate reicht aus.
 	C = multiplikation(P,k) #Erster Teil des Ciphers. Das Produkt des Erzeugerpunktes und des Kofaktors 
-	d = c * m % prim #Zweiter Teil des Ciphers. Produkt der Nachricht und der x-Koordinate des PubKey-Produktes.
+	d = Mod(c * m) #Zweiter Teil des Ciphers. Produkt der Nachricht und der x-Koordinate des PubKey-Produktes.
 	output = str(C[0]) + 'v' + str(C[1])  + 'u' + str(d) #Erstelle den Output
 	return output
 
-def ElGamalDecrypt(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird m ermittelt
+def ElGamalDecryptCalc(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird m ermittelt
 	C = [0,0]
 	C[0] = Decimal(cipher.split('v')[0])
 	zwischenwert = cipher.split('v')[1]
 	C[1] = Decimal(zwischenwert.split('u')[0])
 	d =  Decimal(zwischenwert.split('u')[1]) #Cipher wird gesplittet
 	c1 = multiplikation(C,Privatkey)[0] #Es wird C mit dem Wert Multipliziert und die X-Koordinate ausgelesen.
-	m1 = str(d/c1 % prim + 1) 
+	m1 = Mod(d/c1)
+	if m1 % 1 >= 0.5:
+		m = str(m1 + 1).split('.')[0]
+	if m1% 1 < 0.5:
+		m = str(m1).split('.')[0]
 	#m wird ermittelt. Da das ergebnis aufgrund der Langen Decimalzahlen bei einer Praezision von 1000 immer sehr knapp unter dem eigentlichen 
 	#m (differenz der werte ueblicherweise bei e-900) ist und die Rundenfunktion des flaots zu ungenau ist bei prec = 1000 wird 1 dazu addiert und dann
 	#der rest hinter dem Komma, also .9999999... angeschnitten.
-	m1 = m1.split('.')
-	m1 = int(m1[0])
-	print(m)
-	output = UTF8.UTFdeConvert(m1) #die Zahl wird wieder in einen Text gewandelt.
+	m = int(m)
+	output = UTF8.UTFdeConvert(m) #die Zahl wird wieder in einen Text gewandelt.
 	return output
 
 def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
-	P = [Decimal(31),Decimal(YCalc(31))] #Jan: P0 -> kurze Zahl; P1 -> lange Zahl mit Komma nach ca. 7 Stellen
+	P = [Decimal(9),Decimal(YCalc(9))] #Jan: P0 -> kurze Zahl; P1 -> lange Zahl mit Komma nach ca. 7 Stellen
 	Privat = int(KeyGen.KeyGen(password),16)
 	Public = (multiplikation(P,Privat))
 	return Privat, Public
+
+
+def Elgamal(text,key):
+	text = SplitBlocks(text,16)
+	cArray = []
+	for Wert in text:
+		dump = ElGamalCalc(Wert,key)
+		cArray.append(dump)
+	return cArray
+def ElgamalDecrypt(cipher,key):
+	output = ''
+	cipher = Stringsplitter(cipher)
+	for i in range(0,len(cipher)):
+		output += ElGamalDecryptCalc(cipher[i],key) 
+	return output
+
 
 #	Fuer ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen.
 
@@ -178,3 +239,5 @@ if task == "3":
 else:
 	print "No task given!"
 #Ja ich weiss, dass evt. manche Kommentare noch geaendert werden muessen, aber klappt das so?
+
+
