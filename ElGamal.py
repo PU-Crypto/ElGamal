@@ -143,7 +143,6 @@ def ElGamalDecryptCalc(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird
 	C[0] = Decimal(cipher.split('v')[0])
 	zwischenwert = cipher.split('v')[1]
 	C[1] = Decimal(zwischenwert.split('u')[0])
-	zwischenwert = zwischenwert.split('l')[0]
 	d =  Decimal(zwischenwert.split('u')[1]) #Cipher wird gesplittet
 	c1 = multiplikation(C,Privatkey)[0] #Es wird C mit dem Wert Multipliziert und die X-Koordinate ausgelesen.
 	m1 = Mod(d/c1)
@@ -191,7 +190,6 @@ def ElgamalDecrypt(cipher,key):
 	for i in range(0,len(cipher)):
 		output += ElGamalDecryptCalc(cipher[i],key) 
 	return output
-
 
 def handleShellParam(param, default):
 
