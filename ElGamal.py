@@ -6,6 +6,8 @@ import random
 import KeyGen as KeyGen
 import UTF8_Convert as UTF8
 import json
+import os
+from os import path
 decimal.getcontext().prec = 1000 # es wird alles benoetigte improtiert und die Praezision der Decimals festgestellt, welche nicht zu gering sein sollte.
 #Curve25519: y^2=x^3+486662x^2+x
 #	Prinmzahl: 2^255- 19
@@ -197,14 +199,13 @@ task = handleShellParam("t", 0)
 password = handleShellParam("p", 0)
 keyname = handleShellParam("k", 0)
 PlainOrCipher = handleShellParam("poc", 0)
-Key = handleShellParam("key", 0) 
 if task == "1":
 	if password != 0 and keyname != 0 and len(password) > 15: #das mit len braucht sha3, sonst bugt das.
 		keys = KeyGenerator(password)
 		privat = keys[0]
 		public = keys[1]
-		print "Private Key: " + str(privat)
-		print "Public Key: " + str(public)
+		print("Private Key: " + str(privat))
+		print("Public Key: " + str(public))
 		#NewKey = {"key" : {"name" : keyname, "keys" : {"privkey" : privat, "pubkey" : public}}}
 	
 		#with open("keys.json", 'w') as outfile:
@@ -223,8 +224,16 @@ if task == "1":
 		print ("Leere Felder mag Deep Thought nicht") #der muss so bleiben!!!
 		sys.exit(1)
 if task == "2":
-	Key0 = Key.split(',')[0]
-	Key1 = Key.split(',')[1]
+	try :
+		#with open(name+".json")as f:
+		with open(keyname) as f:
+			Key = json.load(f)
+			PuKey = Key["Public Key: "]
+	except OSError:
+		print('Fehler, kein Key für diesen Namen')
+		sys.exit(1)
+	Key0 = KeyPu.split(',')[0]
+	Key1 = KeyPu.split(',')[1]
 	Key0 = Key0.split("'")[1]
 	Key0 = Key0.split("'")[0]
 	Key1 = Key1.split("'")[1]
@@ -233,8 +242,16 @@ if task == "2":
 	print(ElGamal(PlainOrCipher, Key))
 	sys.exit(0)
 if task == "3":
-	Key = Decimal(Key)
-	print(ElGamalDecrypt(PlainOrCipher, Key))
+	try :
+		#with open(name+".json")as f:
+		with open(keyname) as f:
+			Key = json.load(f)
+			PrKey = Key["Private Key: "]
+	except OSError:
+		print('Fehler, kein Key für diesen Namen')
+		sys.exit(1)
+	PrKey = Decimal(Key)
+	print(ElGamalDecrypt(PlainOrCipher, PrKey))
 	sys.exit(0)
 else:
 	print "No task given!"
