@@ -1,3 +1,4 @@
+#-*-coding: utf-8-*-
 import sys
 import math
 from decimal import Decimal
@@ -142,6 +143,7 @@ def ElGamalDecryptCalc(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird
 	C[0] = Decimal(cipher.split('v')[0])
 	zwischenwert = cipher.split('v')[1]
 	C[1] = Decimal(zwischenwert.split('u')[0])
+	zwischenwert = zwischenwert.split('l')[0]
 	d =  Decimal(zwischenwert.split('u')[1]) #Cipher wird gesplittet
 	c1 = multiplikation(C,Privatkey)[0] #Es wird C mit dem Wert Multipliziert und die X-Koordinate ausgelesen.
 	m1 = Mod(d/c1)
@@ -169,19 +171,27 @@ def Elgamal(text,key):
 	Key1 = Decimal(key.split('lol')[1])
 	key = [Key0,Key1]
 	text = SplitBlocks(text,16)
-	cArray = []
+	c = ''
 	for Wert in text:
 		dump = ElGamalCalc(Wert,key)
-		cArray.append(dump)
-	return cArray
+		c +=dump +'l'
+	return c
 def ElgamalDecrypt(cipher,key):
+	array = []
+	count=0
+	for char in cipher:
+		if char == 'l':
+			count+=1
+	for i in range(0,count):
+		wert = cipher.split('l')[i]
+		array.append(wert)
 	output = ''
+	cipher = array
 	#cipher = Stringsplitter(cipher)
 	for i in range(0,len(cipher)):
 		output += ElGamalDecryptCalc(cipher[i],key) 
 	return output
 
-#	Fuer ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen.
 
 def handleShellParam(param, default):
 
@@ -202,6 +212,7 @@ task = handleShellParam("t", 0)
 password = handleShellParam("p", 0)
 keyname = handleShellParam("k", 0)
 PlainOrCipher = handleShellParam("poc", 0)
+Key = handleShellParam("key", 0)
 if task == "1":
 	if password != 0 and keyname != 0 and len(password) > 15: #das mit len braucht sha3, sonst bugt das.
 		keys = KeyGenerator(password)
@@ -227,27 +238,27 @@ if task == "1":
 		print ("Leere Felder mag Deep Thought nicht") #der muss so bleiben!!!
 		sys.exit(1)
 if task == "2":
-	try :
-		#with open(name+".json")as f:
-		with open(keyname) as f:
-			Key = json.load(f)
-			PuKey = Key["Public Key: "]
-	except OSError:
-		print('Fehler, kein Key für diesen Namen')
-		sys.exit(1)
-	print(ElGamal(PlainOrCipher, Key))
+	#try :
+	#	#with open(name+".json")as f:
+	#	with open(keyname) as f:
+	#		Key = json.load(f)
+	#		PuKey = Key["Public Key: "]
+	#except OSError:
+	#	print('Fehler, kein Key für diesen Namen')
+		#sys.exit(1)
+	print(Elgamal(PlainOrCipher, Key))
 	sys.exit(0)
 if task == "3":
-	try :
-		#with open(name+".json")as f:
-		with open(keyname) as f:
-			Key = json.load(f)
-			PrKey = Key["Private Key: "]
-	except OSError:
-		print('Fehler, kein Key für diesen Namen')
-		sys.exit(1)
+	#try :
+	#	#with open(name+".json")as f:
+	#	with open(keyname) as f:
+	#		Key = json.load(f)
+	#		PrKey = Key["Private Key: "]
+	#except OSError:
+	#	print('Fehler, kein Key für diesen Namen')
+		#sys.exit(1)
 	PrKey = Decimal(Key)
-	print(ElGamalDecrypt(PlainOrCipher, PrKey))
+	print(ElgamalDecrypt(PlainOrCipher, PrKey))
 	sys.exit(0)
 else:
 	print("No task given!")
