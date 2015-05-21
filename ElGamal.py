@@ -160,10 +160,14 @@ def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
 	P = [Decimal(9),Decimal(YCalc(9))] #Jan: P0 -> kurze Zahl; P1 -> lange Zahl mit Komma nach ca. 7 Stellen
 	Privat = int(KeyGen.KeyGen(password),16)
 	Public = (multiplikation(P,Privat))
+	Public = str(Public[0]) + "lol" + str(Public[1])
 	return Privat, Public
 
 
 def Elgamal(text,key):
+	Key0 = Decimal(key.split('lol')[0])
+	Key1 = Decimal(key.split('lol')[1])
+	key = [Key0,Key1]
 	text = SplitBlocks(text,16)
 	cArray = []
 	for Wert in text:
@@ -172,11 +176,10 @@ def Elgamal(text,key):
 	return cArray
 def ElgamalDecrypt(cipher,key):
 	output = ''
-	cipher = Stringsplitter(cipher)
+	#cipher = Stringsplitter(cipher)
 	for i in range(0,len(cipher)):
 		output += ElGamalDecryptCalc(cipher[i],key) 
 	return output
-
 
 #	Fuer ein tieferes Verstaendnis, dieser Verschluesselung empfehle ich die theoretische Ausarbeitung zu lesen.
 
@@ -232,13 +235,6 @@ if task == "2":
 	except OSError:
 		print('Fehler, kein Key für diesen Namen')
 		sys.exit(1)
-	Key0 = KeyPu.split(',')[0]
-	Key1 = KeyPu.split(',')[1]
-	Key0 = Key0.split("'")[1]
-	Key0 = Key0.split("'")[0]
-	Key1 = Key1.split("'")[1]
-	Key1 = Key1.split("'")[0]
-	Key = [Decimal(Key0),Decimal(Key1)]
 	print(ElGamal(PlainOrCipher, Key))
 	sys.exit(0)
 if task == "3":
@@ -254,7 +250,7 @@ if task == "3":
 	print(ElGamalDecrypt(PlainOrCipher, PrKey))
 	sys.exit(0)
 else:
-	print "No task given!"
+	print("No task given!")
 #Ja ich weiss, dass evt. manche Kommentare noch geaendert werden muessen, aber klappt das so?
 
 
