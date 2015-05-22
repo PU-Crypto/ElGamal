@@ -113,20 +113,20 @@ def SplitBlocks(inString,Splitter):
 	if len(inString) % Splitter != 0:
 		block.append(dump2)
 	return block
-def Stringsplitter(String):
-	array = []
-	String = String.split('[')[1]
-	String = String.split(']')[0]
-	count = 0
-	for char in String:
-		if char == ',':
-			count+=1
-	for i in range(0,count+1):
-		wert = String.split(',')[i]
-		wert = wert.split("'")[1]
-		wert = wert.split("'")[0]
-		array.append(wert)
-	return array
+#def Stringsplitter(String):
+#	array = []
+#	String = String.split('[')[1]
+#	String = String.split(']')[0]
+#	count = 0
+#	for char in String:
+#		if char == ',':
+#			count+=1
+#	for i in range(0,count+1):
+#		wert = String.split(',')[i]
+#		wert = wert.split("'")[1]
+#		wert = wert.split("'")[0]
+#		array.append(wert)
+#	return array
 
 def ElGamalCalc(text,PubKey):
 	m = int(UTF8.UTFConvert(text)) #Wandle Text in Zahl um
@@ -166,8 +166,8 @@ def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
 
 
 def Elgamal(text,key):
-	Key0 = Decimal(key.split('lol')[0])
-	Key1 = Decimal(key.split('lol')[1])
+	Key0 = Decimal(key.split('lol')[0].split("'")[1])
+	Key1 = Decimal(key.split('lol')[1].split("'")[0])
 	key = [Key0,Key1]
 	text = SplitBlocks(text,16)
 	c = ''
@@ -185,8 +185,8 @@ def ElgamalDecrypt(cipher,key):
 		wert = cipher.split('l')[i]
 		array.append(wert)
 	output = ''
+	print(array)
 	cipher = array
-	#cipher = Stringsplitter(cipher)
 	for i in range(0,len(cipher)):
 		output += ElGamalDecryptCalc(cipher[i],key) 
 	return output
