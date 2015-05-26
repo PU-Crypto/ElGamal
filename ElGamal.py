@@ -14,9 +14,9 @@ decimal.getcontext().prec = 1000 # es wird alles benoetigte improtiert und die P
 #	Prinmzahl: 2^255- 19
 a = Decimal(486662) #Die Montomerykurve wird mit Primzahl definiert
 b = 1
-prim = Decimal(2**255 - 19)
-def Mod(num):
-	if num / prim > 1 or num / prim < -1 :
+prim = Decimal(2**255 - 19) #=57896044618658097711785492504343953926634992332820282019728792003956564819949
+def Mod(num): #die pythoneigene Modulorechnung ist nicht fuer so grosse Zahlen ausgelegt, deswegen wurde hier eine neue geschrieben
+	if num / prim > 1 or num / prim < -1 : 
 		mult = Decimal((str(Decimal(num/prim)).split('.')[0]))
 		num = Decimal(num - mult * prim)
 		
@@ -96,12 +96,12 @@ def Padding(string,laenge): #Erweitere auf laenge Stellen mit vorangestellten 0
 		string='0' + string 
 	return string
 
-def SplitBlocks(inString,Splitter):
+def SplitBlocks(inString,Splitter): #splittet die Eingabe in Teile bestimmter laenge
 	block = list()
 	if len(inString) % Splitter != 0:
 		NewLen = Splitter*int(str(len(inString)/Splitter).split('.')[0]) 
 		einString = inString[0:NewLen] 
-		dump2 = inString[NewLen:len(inString)+1]
+		dump2 = inString[NewLen:len(inString)+1] #wenn die Eingabe nicht vollstaendig in diese bestimmte laenge aufteielbar ist, wird der 'Rest' als weiterer Eintrag genommen
 	else:
 		einString = inString
 
@@ -113,24 +113,10 @@ def SplitBlocks(inString,Splitter):
 	if len(inString) % Splitter != 0:
 		block.append(dump2)
 	return block
-#def Stringsplitter(String):
-#	array = []
-#	String = String.split('[')[1]
-#	String = String.split(']')[0]
-#	count = 0
-#	for char in String:
-#		if char == ',':
-#			count+=1
-#	for i in range(0,count+1):
-#		wert = String.split(',')[i]
-#		wert = wert.split("'")[1]
-#		wert = wert.split("'")[0]
-#		array.append(wert)
-#	return array
 
 def ElGamalCalc(text,PubKey):
 	m = int(UTF8.UTFConvert(text)) #Wandle Text in Zahl um
-	k = random.randint(0,578960446186580977117854925043439539266349923) #Waehle zufaelligen Kofaktot
+	k = random.randint(2,578960446186580977117854925043439539266349923) #Waehle zufaelligen Kofaktor, die Begrenzung ist der Praezision von nur 1000 geschuldet
 	P = [Decimal(9),Decimal(YCalc(9))] #Erzeugerpunkt
 	c = multiplikation(PubKey,k)[0] #multipliziert kofaktor mit dem Oeffentlichen Schluessel, welcher ein Punkt ist. Die X-Koordniate reicht aus.
 	C = multiplikation(P,k) #Erster Teil des Ciphers. Das Produkt des Erzeugerpunktes und des Kofaktors 
@@ -144,36 +130,37 @@ def ElGamalDecryptCalc(cipher,Privatkey): #Mit dem Privatkey und den Cipher wird
 	zwischenwert = cipher.split('v')[1]
 	C[1] = Decimal(zwischenwert.split('u')[0])
 	d =  Decimal(zwischenwert.split('u')[1]) #Cipher wird gesplittet
-	c1 = multiplikation(C,Privatkey)[0] #Es wird C mit dem Wert Multipliziert und die X-Koordinate ausgelesen.
+	c1 = multiplikation(C,int(Privatkey))[0] #Es wird C mit dem Wert Multipliziert und die X-Koordinate ausgelesen.
 	m1 = Mod(d/c1)
 	if m1 % 1 >= 0.5:
 		m = str(m1 + 1).split('.')[0]
 	if m1% 1 < 0.5:
 		m = str(m1).split('.')[0]
-	#m wird ermittelt. Da das ergebnis aufgrund der Langen Decimalzahlen bei einer Praezision von 1000 immer sehr knapp unter dem eigentlichen 
-	#m (differenz der werte ueblicherweise bei e-900) ist und die Rundenfunktion des flaots zu ungenau ist bei prec = 1000 wird 1 dazu addiert und dann
-	#der rest hinter dem Komma, also .9999999... angeschnitten.
+	#m wird ermittelt. Da das ergebnis aufgrund der Langen Decimalzahlen bei einer Praezision von 1000 immer sehr knapp unter oder ueber dem eigentlichen 
+	#m (differenz der werte ueblicherweise bei e-900) ist und die Rundenfunktion des flaots zu ungenau ist bei prec = 1000 wird manuell gerundet.
 	m = int(m)
 	output = UTF8.UTFdeConvert(m) #die Zahl wird wieder in einen Text gewandelt.
 	return output
 
 def KeyGenerator(password): #generiert das Keypaar aus einem Passwort mit sha3
-	P = [Decimal(9),Decimal(YCalc(9))] #Jan: P0 -> kurze Zahl; P1 -> lange Zahl mit Komma nach ca. 7 Stellen
-	Privat = int(KeyGen.KeyGen(password),16)
-	Public = (multiplikation(P,Privat))
-	Public = str(Public[0]) + "lol" + str(Public[1])
+	P = [Decimal(9),Decimal(YCalc(9))] 
+	Privat = int(KeyGen.KeyGen(password),16) #Das Passwort wird gehashed
+	Public = (multiplikation(P,Privat)) #Der Publickey ist der erzeugerpunkt multiplizert mit dem Privatekey 
+	Privat = str(Privat)
+	Public = str(Public[0]) + "lol" + str(Public[1]) #Der Publickey wird fuer uebergabe u.ae. zum string gemacht
 	return Privat, Public
 
 
 def Elgamal(text,key):
-	Key0 = Decimal(key.split('lol')[0].split("'")[1])
-	Key1 = Decimal(key.split('lol')[1].split("'")[0])
-	key = [Key0,Key1]
-	text = SplitBlocks(text,16)
+	Key0 = Decimal(key.split('lol')[0])#.split("'")[1])
+	Key1 = Decimal(key.split('lol')[1])#.split("'")[0])
+	key = [Key0,Key1] #Der String, welcher der Publickey in der Eingabe ist, wird wieder gespalten und in das typische Punktformat also einen Array transformiert.
+	text = SplitBlocks(text,16) #Der Text wird gesplited, da bei der Praezision von "nur" 1000 nicht zu grosse Zahlen enstehen duerfen. Sonst ist die Ungenauigkeit zu gross. 
 	c = ''
-	for Wert in text:
+	for Wert in text: #die eigentliche Rechnung wird fuer jedes Element des Textarrays durchgefuehrt. Da jedes mal ein anderes k, als Kofaktor verwendet wird, ist selbst bei einem
+	# bekannten k, der Rest der Nachricht nicht knackbar, vorausgesetzt man hat nur das einenk. 
 		dump = ElGamalCalc(Wert,key)
-		c +=dump +'l'
+		c +=dump +'l' #Fuer die Uebergabe wird der Cipher als String ausgegeben 
 	return c
 def ElgamalDecrypt(cipher,key):
 	array = []
@@ -183,83 +170,138 @@ def ElgamalDecrypt(cipher,key):
 			count+=1
 	for i in range(0,count):
 		wert = cipher.split('l')[i]
-		array.append(wert)
+		array.append(wert) #Der Gesammtcipher wird in die einzelcipher unterteielt, welche jeweils 16 zeichen entsprechen.
 	output = ''
-	print(array)
 	cipher = array
 	for i in range(0,len(cipher)):
 		output += ElGamalDecryptCalc(cipher[i],key) 
 	return output
 
-def handleShellParam(param, default):
+#Kommentar zum Script mit Fokus auf die Praezission:
+#----------------------------------------------------------------------------------------------------------------------------------------
+#Bevor hier der Anwendungbereich startet, will ich noch schnell ein paar Tastendrucke an das Thema Praezision verlieren.
+#Man mag sich fragen wie die Begrenzung fuer den Kofaktor begruendet ist, oder die Spaltung der Nachricht. Dazu ist zuerst zu sagen,
+#dass beides kleiner als die Primzahl sein muss und eine 16-stellige Zeichenkette nach der UTF8-Umwandlung eine 64-Stellige Zahl ist,
+#waerend die Primzahl selber auch "nur" 77 Stellen hat. 
+#Aber nun zum Thema Praezision:
+#Tatsaechlich koennen die ersten irrationalen oder periodischen Ergebnisse schon bei der Errechnung der y-Koordinate austreten.
+#Wenn man diese nun schon nach 1000 Stellen "Abschneidet" und mit diesem Resultat weiterrechnet kommen wieder noch ungenauere Werte
+#raus, welche weiterhin sich mit den Fehlern in den anderen Zahlen multiplizieren, wodurch die Fehler sich sozusagen potenzieren.
+#Um diesen ungemuetlichen Effekt zu umgehen muss man, was wohl zum Absturz des Prozesses fuehren wird. Daher minimierte ich ihn, indem ich eine
+#von der Geschwindigkeit noch akzeptable Praezision von 1000 waehlte und Zahlen, gerade bei der Multiplikation, kleiner machte. So kommt die Begrenzung
+#des Kofaktors auf "nur" 45 Stellen. Diese 578960446186580977117854925043439539266349920 moeglichen Kofaktoren fuer jede 16 Zeichkette
+#zu brute-forcen duerfte jedoch ein unrealistischer Angriff sein. Ich wuerde als Angreifer vorallem probieren ueber den Zufallsgenerator
+#die Verschluesselung zu knacken, da dieser wohl seine Schwaechen haben wird, oder ueber die Rechenzeit, die pro 16nerkette benötigt wird
+#k noch weiter eingrenzen. Aufgrund von Unschaerfe duerfte eine Kombination aus beiden Verfahren mit folgendem begrenzten und gezieltem
+#Ausprobieren wohl am sinnvollsten sein.
+#----------------------------------------------------------------------------------------------------------------------------
 
-	for cmdarg in sys.argv:
-		if(("--" + param + "=") in cmdarg):
-			return str(cmdarg.replace(("--" + param + "="), ""))
-		elif(("-" + param + "=") in cmdarg):
-			return str(cmdarg.replace(("-" + param + "="), ""))
-		elif(("--" + param) in cmdarg):
-			return str(cmdarg.replace(("--"), ""))
-		elif(("-" + param) in cmdarg):
-			return str(cmdarg.replace(("-"), ""))
-	return default
+#Anwendungsbereich---------------------------------------------------------------------------------------------------------
 
-task = handleShellParam("t", 0) 
-#zur Bestimmung was gerade von dem Script verlangt wird, sonst exited er, wenn man verschluesseln will und natuerlich das Password fehlt
-#Fuer KeyGen waehlen Sie bitte die 1, fue Encrypt die 2 und fuer Decrypt die 3 
-password = handleShellParam("p", 0)
-keyname = handleShellParam("k", 0)
-PlainOrCipher = handleShellParam("poc", 0)
-Key = handleShellParam("key", 0)
-if task == "1":
-	if password != 0 and keyname != 0 and len(password) > 15: #das mit len braucht sha3, sonst bugt das.
-		keys = KeyGenerator(password)
-		privat = keys[0]
-		public = keys[1]
-		print("Private Key: " + str(privat))
-		print("Public Key: " + str(public))
-		#NewKey = {"key" : {"name" : keyname, "keys" : {"privkey" : privat, "pubkey" : public}}}
-	
-		#with open("keys.json", 'w') as outfile:
-			#json.dump(NewKey, outfile, indent = 3, sort_keys = True)
-			#sys.exit(0)
-	elif password == 0:
-		print("Es fehlte das Passwort bei ihrer Eingabe")
-		sys.exit(1)
-	elif len(str(password)) < 16:
-		print("Das Passwort ist zu kurz. Die laenge muss mindestens 16 Zeichen betragen")
-		sys.exit(1)
-	elif keyname == 0:
-		print("Es fehlte der Schluesselname bei ihrer Eingabe")
-		sys.exit(1)
-	else:
-		print ("Leere Felder mag Deep Thought nicht") #der muss so bleiben!!!
-		sys.exit(1)
-if task == "2":
-	#try :
-	#	#with open(name+".json")as f:
-	#	with open(keyname) as f:
-	#		Key = json.load(f)
-	#		PuKey = Key["Public Key: "]
-	#except OSError:
-	#	print('Fehler, kein Key für diesen Namen')
-		#sys.exit(1)
-	print(Elgamal(PlainOrCipher, Key))
-	sys.exit(0)
-if task == "3":
-	#try :
-	#	#with open(name+".json")as f:
-	#	with open(keyname) as f:
-	#		Key = json.load(f)
-	#		PrKey = Key["Private Key: "]
-	#except OSError:
-	#	print('Fehler, kein Key für diesen Namen')
-		#sys.exit(1)
-	PrKey = Decimal(Key)
-	print(ElgamalDecrypt(PlainOrCipher, PrKey))
-	sys.exit(0)
+password = '' #hier kann ein Passwort eingetragen werden, welches mindestens eine Laenge von 16 Zeichen hat.
+# Dieses wuerde dann fuer die Schluesselgenerierung genutz werden
+Nachricht = ''#hier kann eine zum verschluesseln Nachricht eingegeben werden
+Cipher =''#hier kann eine Verschluesselte Nachricht, der Cipher also, zum entschluesseln eingegeben werden
+Key = ''#hier kann ein Schluessel zum ver - oder entschluesseln eingeben werden. Zum Verschluesseln nimmt man den Publickey
+#zum Entschluesseln nimmt man den entsprechenden Privatekey
+if password=='' and Nachricht=='' and Cipher=='' and Key=='':
+	print('Mit dem Script kann Deep Thought Schluessel generieren und mit diesen Ver- und Entschluesseln. Dafuer muessen aber die Strings gefuellt werden. Bitte die durch # gekennzeichneten Kommentare lesen!!!')
 else:
-	print("No task given!")
-#Ja ich weiss, dass evt. manche Kommentare noch geaendert werden muessen, aber klappt das so?
+	if password != '' and len(password) > 15:
+		Keys = KeyGenerator(password)
+		print("Privatekey:")
+		print(Keys[0])
+		print("Publickey:")
+		print(Keys[1])
+	if password !='' and len(password) < 15:
+		print('Das Passwort ist zu kurz')
+	if Key !='':
+		if Nachricht !='' and Cipher !='':
+			print('Sie koennen nicht gleichzeitig Ver- und Entschluesseln. Bitte leeren Sie den entsprechend falschen String und achten sie auch die Richtige Schluesselwahl')
+		elif Nachricht == '' and Cipher =='':
+			print('Sie muessen zum Ent- oder Verschluesseln die entsprechenden Felder fuellen')
+		elif Nachricht != '' and Cipher =='':
+			print(Elgamal(Nachricht,Key))
+		elif Cipher != '' and Nachricht == '':
+			print(ElgamalDecrypt(Cipher,Key))
+		else:
+			print("""Dieser Fall ist unmoeglich, sofern nicht wer am Script rumgepfuscht hat. 
+				Bitte melden Sie diesen Vorfall den kleinen weissen Maeusen, damit sie Deep Thought debuggen koennen""")
+	if Key=='' and Cipher!='' or Nachricht!='':
+		print('Zum Ver- und Entschluesseln wird ein Schluessel benoetigt. Ich biete ihnen, wenn sie keinen Schluessel haben sollten, als alternative Antwort 42 an.')
+#--------------------------------------------------------------------------------------------------------------------------------
+
+#Folgendes ist der Teil des Scriptes, welcher die Zusammenfuehrung gewaehrleisten sollte. 
+
+#def handleShellParam(param, default):
+#
+#	for cmdarg in sys.argv:
+#		if(("--" + param + "=") in cmdarg):
+#			return str(cmdarg.replace(("--" + param + "="), ""))
+#		elif(("-" + param + "=") in cmdarg):
+#			return str(cmdarg.replace(("-" + param + "="), ""))
+#		elif(("--" + param) in cmdarg):
+#			return str(cmdarg.replace(("--"), ""))
+#		elif(("-" + param) in cmdarg):
+#			return str(cmdarg.replace(("-"), ""))
+#	return default
+#
+#task = handleShellParam("t", 0) 
+##zur Bestimmung was gerade von dem Script verlangt wird, sonst exited er, wenn man verschluesseln will und natuerlich das Password fehlt
+##Fuer KeyGen waehlen Sie bitte die 1, fue Encrypt die 2 und fuer Decrypt die 3 
+#password = handleShellParam("p", 0)
+#keyname = handleShellParam("k", 0)
+#PlainOrCipher = handleShellParam("poc", 0)
+#Key = handleShellParam("key", 0)
+#if task == "1":
+#	if password != 0 and keyname != 0 and len(password) > 15: #das mit len braucht sha3, sonst bugt das.
+#		keys = KeyGenerator(password)
+#		privat = keys[0]
+#		public = keys[1]
+#		print("Private Key: " + str(privat))
+#		print("Public Key: " + str(public))
+#		#NewKey = {"key" : {"name" : keyname, "keys" : {"privkey" : privat, "pubkey" : public}}}
+#	
+#		#with open("keys.json", 'w') as outfile:
+#			#json.dump(NewKey, outfile, indent = 3, sort_keys = True)
+#			#sys.exit(0)
+#	elif password == 0:
+#		print("Es fehlte das Passwort bei ihrer Eingabe")
+#		sys.exit(1)
+#	elif len(str(password)) < 16:
+#		print("Das Passwort ist zu kurz. Die laenge muss mindestens 16 Zeichen betragen")
+#		sys.exit(1)
+#	elif keyname == 0:
+#		print("Es fehlte der Schluesselname bei ihrer Eingabe")
+#		sys.exit(1)
+#	else:
+#		print ("Leere Felder mag Deep Thought nicht") #der muss so bleiben!!!
+#		sys.exit(1)
+#if task == "2":
+#	#try :
+#	#	#with open(name+".json")as f:
+#	#	with open(keyname) as f:
+#	#		Key = json.load(f)
+#	#		PuKey = Key["Public Key: "]
+#	#except OSError:
+#	#	print('Fehler, kein Key für diesen Namen')
+#		#sys.exit(1)
+#	print(Elgamal(PlainOrCipher, Key))
+#	sys.exit(0)
+#if task == "3":
+#	#try :
+#	#	#with open(name+".json")as f:
+#	#	with open(keyname) as f:
+#	#		Key = json.load(f)
+#	#		PrKey = Key["Private Key: "]
+#	#except OSError:
+#	#	print('Fehler, kein Key für diesen Namen')
+#		#sys.exit(1)
+#	PrKey = Decimal(Key)
+#	print(ElgamalDecrypt(PlainOrCipher, PrKey))
+#	sys.exit(0)
+#else:
+#	print("No task given!")
+##Ja ich weiss, dass evt. manche Kommentare noch geaendert werden muessen, aber klappt das so?
 
 
